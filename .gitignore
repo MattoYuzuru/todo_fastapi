@@ -2,3 +2,4 @@
 .env
 .idea
 .env_db
+__pycache__/
