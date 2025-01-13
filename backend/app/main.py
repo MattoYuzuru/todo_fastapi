@@ -6,5 +6,5 @@ from .routes import todo_router
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="To-Do App", version="1.0")
+app = FastAPI(title="todoly", version="1.0")
 app.include_router(todo_router.router, prefix="/todos", tags=["To-Dos"])

@@ -44,7 +44,6 @@ To get a local copy up and running, follow these steps.
 │   │   │   models\
 │   │   │   ├───__init__.py\
 │   │   │   ├───base.py\
-│   │   │   ├───todo.py\
 │   │   │   ├───todo_item.py\
 │   │   │   └───user.py\
 │   │   ├───routes\
@@ -104,7 +103,7 @@ pip install -r requirements.txt
 ```
 
 Tech Stack
-FastAPI, PostgreSQL
+FastAPI, Alchemy, Alembic, PostgreSQL
 Frontend: Vue.js
 Deployment: Docker, Nginx, etc
 
