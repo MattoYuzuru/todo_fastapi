@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from .db.session import engine
+from .models.base import Base
+from .routes import todo_router
 
-@app.get("/")
-def read_root():
-    return {"message": "Hello, world!"}
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="To-Do App", version="1.0")
+app.include_router(todo_router.router, prefix="/todos", tags=["To-Dos"])

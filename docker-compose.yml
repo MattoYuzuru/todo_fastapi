@@ -1,12 +1,12 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: db-todo
+    container_name: todo_db
     restart: always
     env_file:
       - .env_db
     ports:
-      - "5431:5432"
+      - "5430:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
