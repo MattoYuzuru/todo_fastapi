@@ -102,6 +102,14 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Fill your .env file
+
+This command is for secret key for user auth.
+```bash
+
+openssl rand -hex 32
+```
+
 Tech Stack
 FastAPI, Alchemy, Alembic, PostgreSQL
 Frontend: Vue.js

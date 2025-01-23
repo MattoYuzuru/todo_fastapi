@@ -1,13 +1,13 @@
-<script>
-export default {
-  name: "App.vue"
-}
-</script>
-
 <template>
-
+  <div id="app">
+    <header>
+      <h1>To-Do App</h1>
+    </header>
+  </div>
 </template>
 
-<style scoped>
-
-</style>
+<script>
+export default {
+  name: 'App',
+};
+</script>
