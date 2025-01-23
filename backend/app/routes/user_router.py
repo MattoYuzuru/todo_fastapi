@@ -8,7 +8,7 @@ from ..auth import create_access_token
 from ..crud.user_crud import (
     authenticate_user,
     create_user,
-    get_user_by_id, get_user_by_username
+    get_user_by_id, get_user_by_username, get_current_user
 )
 from ..crud.user_crud import (
     get_all_users,
@@ -16,6 +16,7 @@ from ..crud.user_crud import (
     delete_user,
 )
 from ..db.session import get_db
+from ..models import User
 from ..schemas.token_schemas import Token
 from ..schemas.user_schemas import UserCreate, UserResponse, UserUpdate
 
@@ -53,6 +54,11 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+@router.get("/me", response_model=UserResponse)
+def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
 
 
 @router.get("/", response_model=List[UserResponse])
