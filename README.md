@@ -20,80 +20,95 @@ To get a local copy up and running, follow these steps.
 
 ## Project Structure
 
-├───.env \
-├───.gitignore\
-├───LICENCE\
-├───README.md\
-├───backend\
-│   backend\
-│   ├───Dockerfile\
-│   ├───app\
-│   │   app\
-│   │   ├───__init__.py\
-│   │   ├───config.py\
-│   │   ├───crud\
-│   │   │   crud\
-│   │   │   ├───__init__.py\
-│   │   │   └───todo_crud.py\
-│   │   ├───db\
-│   │   │   db\
-│   │   │   ├───__init__.py\
-│   │   │   └───session.py\
-│   │   ├───main.py\
-│   │   ├───models\
-│   │   │   models\
-│   │   │   ├───__init__.py\
-│   │   │   ├───base.py\
-│   │   │   ├───todo_item.py\
-│   │   │   └───user.py\
-│   │   ├───routes\
-│   │   │   routes\
-│   │   │   ├───__init__.py\
-│   │   │   └───todo_router.py\
-│   │   └───schemas\
-│   │       schemas\
-│   │       ├───__init__.py\
-│   │       └───todo_schemas.py\
-│   └───tests\
-│       tests\
-│       ├───__init__.py\
-│       └───test_todo.py\
-├───docker-compose.yml\
-├───frontend\
-│   frontend\
-│   ├───package.json\
-│   ├───public\
-│   │   public\
-│   ├───src\
-│   │   src\
-│   │   ├───App.vue\
-│   │   ├───components\
-│   │   │   components\
-│   │   │   ├───AddToDo.vue\
-│   │   │   └───ToDoList.vue\
-│   │   ├───main.js\
-│   │   ├───router\
-│   │   │   router\
+```
+├───.env 
+├───.env_db 
+├───.gitignore
+├───LICENCE
+├───README.md
+├───backend
+│   backend
+│   ├───Dockerfile
+│   ├───app
+│   │   ├───__init__.py
+│   │   ├───config.py
+│   │   ├───auth.py
+│   │   ├───main.py
+│   │   ├───crud
+│   │   │   ├───__init__.py
+│   │   │   ├───todo_crud.py
+│   │   │   └───user_crud.py
+│   │   ├───db
+│   │   │   ├───__init__.py
+│   │   │   └───session.py
+│   │   ├───models
+│   │   │   ├───__init__.py
+│   │   │   ├───base.py
+│   │   │   ├───todo_item.py
+│   │   │   └───user.py
+│   │   ├───routes
+│   │   │   ├───__init__.py
+│   │   │   ├───todo_router.py
+│   │   │   └───user_router.py
+│   │   └───schemas
+│   │       ├───__init__.py
+│   │       ├───todo_schemas.py
+│   │       ├───token_schemas.py
+│   │       └───user_schemas.py
+│   └───tests
+│       ├───__init__.py
+│       └───test_todo.py
+├───docker-compose.yml
+├───frontend
+│   ├───package.json
+│   ├───public
+│   │   public
+│   ├───src
+│   │   ├───App.vue
+│   │   ├───components
+│   │   │   components
+│   │   │   ├───AddToDo.vue
+│   │   │   └───ToDoList.vue
+│   │   ├───main.js
+│   │   ├───router
 │   │   │   └───index.js
-│   │   └───views\
-│   │       views\
-│   │       └───Home.vue\
-│   └───store\
-│       store\
-│       └───index.js\
+│   │   └───views
+│   │       └───Home.vue
+│   └───store
+│       └───index.js
 └───requirements.txt
+```
+
+## Tech Stack
+Backend: 
+* FastAPI
+
+DB, ORM, migrations management:
+* PostgreSQL
+* Alchemy
+* Alembic
+
+Frontend: 
+* Vue.js
+
+Deployment:
+* Docker
+* Nginx
+
+etc
 
 
 ## Requirements and Installation
 
-Python 3.11 or higher \
-Docker (I used it for hosting) \
-Backend (FastAPI) \
-Frontend (Vue.js)
+* Python 3.11 or higher 
+* Docker 
+* Backend (FastAPI) 
+* Frontend (Vue.js) 
 
-### Clone the repository:
+#### Clone the repository:
 
 ```bash
+
 git clone https://github.com/MattoYuzuru/todo_fastapi.git
 cd todo_fastapi
 
@@ -102,18 +117,34 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Fill your .env file
+#### Configure all .env files
 
-This command is for secret key for user auth.
+This command is for secret key for user auth (SECRET_KEY in .env)
 ```bash
 
 openssl rand -hex 32
 ```
 
-Tech Stack
-FastAPI, Alchemy, Alembic, PostgreSQL
-Frontend: Vue.js
-Deployment: Docker, Nginx, etc
+There are 2 .env in my project. 
+1) .env 
+```
+DATABASE_URL=postgresql+psycopg2://username:password@localhost:port/db_name
+SECRET_KEY=your_key
+ALGORITHM=HS256
+```
+2) .env_db
+```
+POSTGRES_USER=username
+POSTGRES_PASSWORD=password
+POSTGRES_DB=db_name
+```
+
+#### Run docker-compose to init data base
+
+```bash
+
+docker compose up -d
+```
 
 ## Contributing
 
