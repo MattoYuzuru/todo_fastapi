@@ -119,20 +119,21 @@ pip install -r requirements.txt
 
 #### Configure all .env files
 
-This command is for secret key for user auth (SECRET_KEY in .env)
+Run this command and copy the secret key\
+It's for User Authentication (SECRET_KEY in .env)
 ```bash
 
 openssl rand -hex 32
 ```
 
 There are 2 .env in my project. 
-1) .env 
+1) .env (for all config variables)
 ```
 DATABASE_URL=postgresql+psycopg2://username:password@localhost:port/db_name
 SECRET_KEY=your_key
 ALGORITHM=HS256
 ```
-2) .env_db
+2) .env_db (to run postrgesql via its docker image)
 ```
 POSTGRES_USER=username
 POSTGRES_PASSWORD=password
