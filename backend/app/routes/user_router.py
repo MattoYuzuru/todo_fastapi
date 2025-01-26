@@ -56,19 +56,21 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
     return user
 
 
-@router.get("/me", response_model=UserResponse)
-def read_users_me(current_user: User = Depends(get_current_user)):
-    return current_user
-
-
 @router.get("/", response_model=List[UserResponse])
 def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     users = get_all_users(db, skip, limit)
     return users
 
 
+@router.get("/me", response_model=UserResponse)
+def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
 @router.put("/{user_id}", response_model=UserResponse)
-def update_existing_user(user_id: int, user_data: UserUpdate, db: Session = Depends(get_db)):
+def update_existing_user(user_id: int, user_data: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this user")
     user = update_user(db, user_id, user_data)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -76,7 +78,9 @@ def update_existing_user(user_id: int, user_data: UserUpdate, db: Session = Depe
 
 
 @router.delete("/{user_id}", response_model=UserResponse)
-def delete_existing_user(user_id: int, db: Session = Depends(get_db)):
+def delete_existing_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this user")
     user = delete_user(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

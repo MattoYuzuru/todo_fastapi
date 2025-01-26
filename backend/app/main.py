@@ -13,4 +13,4 @@ app.include_router(user_router.router, prefix="/users", tags=["Users"])
 
 @app.get("/")
 def read_root():
-    return {"message" : "Welcome to ToDoly"}
+    return {"message" : "Welcome to ToDoly :) You have to use /docs for now."}
