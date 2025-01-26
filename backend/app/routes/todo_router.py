@@ -8,7 +8,9 @@ from ..crud.todo_crud import (create_todo_item,
                               delete_todo_item,
                               start_pomodoro,
                               pause_pomodoro,
-                              finish_pomodoro
+                              finish_pomodoro,
+                              mark_task_as_completed,
+                              get_completed_tasks
                               )
 from ..crud.user_crud import get_current_user
 from ..db.session import get_db
@@ -31,10 +33,16 @@ def read_task(todo_id: int, db: Session = Depends(get_db), current_user: User = 
     return task
 
 
-@router.get("/", response_model=list[TodoItemResponse])
+@router.get("/all/", response_model=list[TodoItemResponse])
 def read_user_tasks(skip: int = 0, limit: int = 10, db: Session = Depends(get_db),
                     current_user: User = Depends(get_current_user)):
     return get_user_todo_items(db, current_user, skip, limit)
+
+
+@router.get("/completed/", response_model=list[TodoItemResponse])
+def read_user_completed_tasks(skip: int = 0, limit: int = 10, db: Session = Depends(get_db),
+                              current_user: User = Depends(get_current_user)):
+    return get_completed_tasks(db, current_user, skip, limit)
 
 
 @router.put("/{todo_id}", response_model=TodoItemResponse)
@@ -52,6 +60,11 @@ def delete_task(todo_id: int, db: Session = Depends(get_db), current_user: User 
     if not deleted_task:
         raise HTTPException(status_code=404, detail="Task not found")
     return {"message": "Task deleted"}
+
+
+@router.post("/{todo_id}/complete")
+def complete_task(todo_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return mark_task_as_completed(db, todo_id, current_user)
 
 
 @router.post("/{todo_id}/pomodoro/start")

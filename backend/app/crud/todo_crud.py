@@ -25,19 +25,32 @@ def get_todo_item(db: Session, todo_id: int):
 
 
 def get_user_todo_items(db: Session, current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 10):
-    return db.query(TodoItem).filter(TodoItem.user_id == current_user.id).offset(skip).limit(limit).all()
+    all_todos = db.query(TodoItem).filter(TodoItem.user_id == current_user.id).offset(skip).limit(limit).all()
+    return all_todos
+
+
+def get_completed_tasks(db: Session, current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 10):
+    completed_todos = db.query(TodoItem).filter(TodoItem.user_id == current_user.id,
+                                                TodoItem.status == "Completed").offset(skip).limit(limit).all()
+    return completed_todos
 
 
 def update_todo_item(db: Session, todo_id: int, todo_data: TodoItemUpdate,
                      current_user: User = Depends(get_current_user)):
-    db_todo = db.query(TodoItem).filter(TodoItem.id == todo_id, TodoItem.user_id == current_user.id).first()
-    if not db_todo:
+    todo = db.query(TodoItem).filter(TodoItem.id == todo_id, TodoItem.user_id == current_user.id).first()
+
+    if not todo:
         return None
+
     for key, value in todo_data.model_dump(exclude_unset=True).items():
-        setattr(db_todo, key, value)
+        setattr(todo, key, value)
+
+    if todo.status == "Completed" and todo.completed_at is None:
+        todo.completed_at = datetime.now(TIME_ZONE)
+
     db.commit()
-    db.refresh(db_todo)
-    return db_todo
+    db.refresh(todo)
+    return todo
 
 
 def delete_todo_item(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):
@@ -102,3 +115,18 @@ def finish_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_
     db.commit()
     db.refresh(todo)
     return {"message": "Pomodoro finished", "elapsed_time": elapsed_time, "total_pomodoros": todo.pomodoro_sessions}
+
+
+def mark_task_as_completed(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):
+    todo = db.query(TodoItem).filter(TodoItem.id == todo_id, TodoItem.user_id == current_user.id).first()
+    if not todo:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if todo.completed_at:
+        raise HTTPException(status_code=400, detail="Task is already completed")
+
+    todo.status = "Completed"
+    todo.completed_at = datetime.now(TIME_ZONE)
+    db.commit()
+    db.refresh(todo)
+    return todo
