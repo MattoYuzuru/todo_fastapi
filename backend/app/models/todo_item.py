@@ -17,6 +17,8 @@ class TodoItem(Base):
     collaborators = Column(ARRAY(Integer), default=[])
     completed_at = Column(TIMESTAMP, nullable=True)
     pomodoro_sessions = Column(Integer, default=0)
+    total_time_spent = Column(Integer, default=0)
+    current_streak = Column(Integer, default=0)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
