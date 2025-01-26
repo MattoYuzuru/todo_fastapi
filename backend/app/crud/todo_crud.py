@@ -1,10 +1,15 @@
-from fastapi import Depends
+from datetime import datetime
+
+from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from ..config import TIME_ZONE
 from ..crud.user_crud import get_current_user
 from ..models import TodoItem
 from ..models.user import User
 from ..schemas.todo_schemas import TodoItemCreate, TodoItemUpdate
+
+active_pomodoros = {}
 
 
 def create_todo_item(db: Session, todo_data: TodoItemCreate, current_user: User = Depends(get_current_user)):
@@ -41,3 +46,59 @@ def delete_todo_item(db: Session, todo_id: int, current_user: User = Depends(get
         db.delete(db_todo)
         db.commit()
     return db_todo
+
+
+def start_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):
+    todo = db.query(TodoItem).filter(TodoItem.id == todo_id, TodoItem.user_id == current_user.id).first()
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    if todo.id in active_pomodoros:
+        raise HTTPException(status_code=400, detail="Pomodoro already active for this task")
+
+    active_pomodoros[todo_id] = {
+        "start_time": datetime.now(TIME_ZONE),
+    }
+    return {"message": "Pomodoro started"}
+
+
+def pause_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):
+    if todo_id not in active_pomodoros:
+        raise HTTPException(status_code=400, detail="No active pomodoro session for this task")
+
+    session = active_pomodoros.pop(todo_id)
+    elapsed_time = (datetime.now(TIME_ZONE) - session["start_time"]).total_seconds()
+
+    todo = db.query(TodoItem).filter(TodoItem.id == todo_id, TodoItem.user_id == current_user.id).first()
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    if todo.total_time_spent is None:
+        todo.total_time_spent = 0
+
+    todo.total_time_spent += int(elapsed_time)
+    db.commit()
+    db.refresh(todo)
+    return {"message": "Pomodoro paused", "elapsed_time": elapsed_time}
+
+
+def finish_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):
+    if todo_id not in active_pomodoros:
+        raise HTTPException(status_code=400, detail="No active pomodoro session for this task")
+
+    session = active_pomodoros.pop(todo_id)
+    elapsed_time = (datetime.now(TIME_ZONE) - session["start_time"]).total_seconds()
+
+    todo = db.query(TodoItem).filter(TodoItem.id == todo_id, TodoItem.user_id == current_user.id).first()
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    if todo.total_time_spent is None:
+        todo.total_time_spent = 0
+
+    todo.total_time_spent += int(elapsed_time)
+    todo.pomodoro_sessions += 1
+    current_user.pomodoro_sessions += 1
+    db.commit()
+    db.refresh(todo)
+    return {"message": "Pomodoro finished", "elapsed_time": elapsed_time, "total_pomodoros": todo.pomodoro_sessions}
