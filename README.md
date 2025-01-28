@@ -27,13 +27,13 @@ To get a local copy up and running, follow these steps.
 ├───LICENCE
 ├───README.md
 ├───backend
-│   backend
 │   ├───Dockerfile
 │   ├───app
 │   │   ├───__init__.py
 │   │   ├───config.py
 │   │   ├───auth.py
 │   │   ├───main.py
+│   │   ├───requirements.txt
 │   │   ├───crud
 │   │   │   ├───__init__.py
 │   │   │   ├───todo_crud.py
@@ -58,25 +58,27 @@ To get a local copy up and running, follow these steps.
 │   └───tests
 │       ├───__init__.py
 │       └───test_todo.py
-├───docker-compose.yml
 ├───frontend
+│   ├───Dockerfile
 │   ├───package.json
 │   ├───public
-│   │   public
 │   ├───src
 │   │   ├───App.vue
 │   │   ├───components
-│   │   │   components
 │   │   │   ├───AddToDo.vue
-│   │   │   └───ToDoList.vue
+│   │   │   ├───ToDoList.vue
+│   │   │   └───Timer.vue
 │   │   ├───main.js
 │   │   ├───router
 │   │   │   └───index.js
 │   │   └───views
-│   │       └───Home.vue
+│   │       ├───Home.vue
+│   │       ├───Login.vue
+│   │       ├───Register.vue
+│   │       └───Pomodoro.vue
 │   └───store
 │       └───index.js
-└───requirements.txt
+└───docker-compose.yml
 ```
 
 ## Tech Stack
@@ -139,6 +141,16 @@ POSTGRES_USER=username
 POSTGRES_PASSWORD=password
 POSTGRES_DB=db_name
 ```
+
+#### Frontend installations
+Install nodejs npm (if not installed)
+
+Then run this:
+```bash
+
+nmp install frontend/package.json
+```
+
 
 #### Run docker-compose to init data base
 

@@ -4,4 +4,3 @@
 .env_db
 __pycache__/
 frontend/node_modules
-frontend/package-lock.json
