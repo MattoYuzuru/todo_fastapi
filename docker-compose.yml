@@ -1,4 +1,29 @@
 services:
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fastapi_backend
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vue_frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:8080"
+
   postgres:
     image: postgres:15-alpine
     container_name: todo_db
