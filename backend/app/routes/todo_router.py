@@ -27,10 +27,10 @@ def create_task(todo: TodoItemCreate, db: Session = Depends(get_db), current_use
 
 @router.get("/{todo_id}", response_model=TodoItemResponse)
 def read_task(todo_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    task = get_todo_item(db, todo_id)
-    if not task or task.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Task not found")
-    return task
+    todo = get_todo_item(db, todo_id)
+    if not todo or todo.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Todo not found")
+    return todo
 
 
 @router.get("/all/", response_model=list[TodoItemResponse])

@@ -68,7 +68,8 @@ def read_users_me(current_user: User = Depends(get_current_user)):
 
 
 @router.put("/{user_id}", response_model=UserResponse)
-def update_existing_user(user_id: int, user_data: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def update_existing_user(user_id: int, user_data: UserUpdate, db: Session = Depends(get_db),
+                         current_user: User = Depends(get_current_user)):
     if user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to update this user")
     user = update_user(db, user_id, user_data)
