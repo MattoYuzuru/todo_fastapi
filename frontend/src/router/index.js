@@ -1,19 +1,45 @@
-import {createRouter, createWebHistory} from 'vue-router';
-import Home from '@/views/Home.vue';
-import Login from '@/views/Login.vue';
-import Register from '@/views/Register.vue';
-import Pomodoro from '@/views/Pomodoro.vue';
+import Vue from 'vue';
+import Router from 'vue-router';
+import UserRegister from '../components/UserRegister.vue';
+import UserLogin from '../components/UserLogin.vue';
+import HomePage from '../components/HomePage.vue';
+import AddToDo from '../components/AddTodo.vue';
+import TodoDetails from '../components/TodoDetails.vue';
+
+Vue.use(Router);
 
 const routes = [
-    {path: '/', name: 'Home', component: Home},
-    {path: '/login', name: 'Login', component: Login},
-    {path: '/register', name: 'Register', component: Register},
-    {path: '/pomodoro', name: 'Pomodoro', component: Pomodoro},
+    {
+        path: '/',
+        name: 'Home',
+        component: HomePage
+    },
+    {
+        path: '/register',
+        name: 'Register',
+        component: UserRegister
+    },
+    {
+        path: '/login',
+        name: 'Login',
+        component: UserLogin
+    },
+    {
+        path: '/todos/create',
+        name: 'CreateToDo',
+        component: AddToDo
+    },
+    {
+        path: '/todos/:id',
+        name: 'TodoDetails',
+        component: TodoDetails,
+        props: true
+    }
 ];
 
-const router = createRouter({
-    history: createWebHistory(),
-    routes,
+const router = new Router({
+    mode: 'history',
+    routes
 });
 
 export default router;

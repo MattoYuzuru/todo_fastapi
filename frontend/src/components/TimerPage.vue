@@ -1,5 +1,5 @@
 <template>
-  <div class="timer">
+  <div class="container">
     <h2>{{ formattedTime }}</h2>
     <div class="controls">
       <button @click="startTimer" :disabled="isRunning">Start</button>

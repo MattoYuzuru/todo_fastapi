@@ -19,13 +19,21 @@ export default {
   },
   methods: {
     async addTodo() {
-      await axios.post('/todos', {
-        title: this.title,
-        description: this.description,
-      });
-      this.$emit('todoAdded');
-    },
-  },
+      try {
+        await axios.post('http://localhost:8000/todos', {
+          title: this.title,
+          description: this.description,
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        await this.$router.push('/');
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }
 };
 </script>
 
