@@ -59,25 +59,30 @@ To get a local copy up and running, follow these steps.
 │       ├───__init__.py
 │       └───test_todo.py
 ├───frontend
-│   ├───Dockerfile
-│   ├───package.json
-│   ├───public
 │   ├───src
 │   │   ├───App.vue
-│   │   ├───components
-│   │   │   ├───AddToDo.vue
-│   │   │   ├───ToDoList.vue
-│   │   │   └───Timer.vue
 │   │   ├───main.js
+│   │   ├───components
+│   │   │   ├───AddTodo.vue
+│   │   │   ├───TodoList.vue
+│   │   │   ├───HomePage.vue
+│   │   │   ├───PomodoroPage.vue
+│   │   │   ├───TodoDetails.vue
+│   │   │   ├───UserLogin.vue
+│   │   │   ├───UserRegister.vue
+│   │   │   └───TimerPage.vue
 │   │   ├───router
 │   │   │   └───index.js
-│   │   └───views
-│   │       ├───Home.vue
-│   │       ├───Login.vue
-│   │       ├───Register.vue
-│   │       └───Pomodoro.vue
-│   └───store
-│       └───index.js
+│   │   ├───store
+│   │   │   └───index.js
+│   │   └───assest
+│   │       └───custom.css
+│   ├───babel.config.js
+│   ├───Dockerfile
+│   ├───jsconfig.json
+│   ├───package.json
+│   ├───package-lock.json
+│   └───vue.config.js
 └───docker-compose.yml
 ```
 
