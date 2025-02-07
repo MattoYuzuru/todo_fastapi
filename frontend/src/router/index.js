@@ -5,6 +5,7 @@ import UserLogin from '../components/UserLogin.vue';
 import HomePage from '../components/HomePage.vue';
 import AddToDo from '../components/AddTodo.vue';
 import TodoDetails from '../components/TodoDetails.vue';
+import TodoList from "@/components/TodoList.vue";
 
 Vue.use(Router);
 
@@ -28,6 +29,12 @@ const routes = [
         path: '/todos/create',
         name: 'CreateToDo',
         component: AddToDo
+    },
+    {
+        path: '/todos/all/',
+        name: 'TodoList',
+        component: TodoList,
+        props: true
     },
     {
         path: '/todos/:id',

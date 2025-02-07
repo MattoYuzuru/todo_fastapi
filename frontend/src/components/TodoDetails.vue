@@ -23,13 +23,13 @@ export default {
   methods: {
     async fetchTodo() {
       try {
-        const response = await axios.get("http://localhost:8000/todos/all", {
+        const response = await axios.get(`http://localhost:8000/todos/${this.id}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
 
-        this.todos = response.data;
+        this.todo = response.data;
       } catch (error) {
         console.error(
             "Error fetching todos:",

@@ -34,7 +34,7 @@ export default {
         params.append('username', this.username);
         params.append('password', this.password);
 
-        const response = await axios.post('http://localhost:8000/users/login', params);
+        const response = await axios.post('http://localhost:8000/login', params);
         localStorage.setItem('token', response.data.access_token);
         this.$router.push('/todos/all');
       } catch (error) {

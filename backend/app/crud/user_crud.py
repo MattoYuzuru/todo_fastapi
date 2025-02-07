@@ -10,7 +10,7 @@ from ..models.user import User
 from ..schemas.token_schemas import TokenData
 from ..schemas.user_schemas import UserCreate, UserUpdate
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
 def create_user(db: Session, user_data: UserCreate):

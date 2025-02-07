@@ -17,8 +17,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(todo_router.router, prefix="/todos", tags=["To-Dos"])
-app.include_router(user_router.router, prefix="/users", tags=["Users"])
+app.include_router(todo_router.router, tags=["To-Dos"])
+app.include_router(user_router.router, tags=["Users"])
 
 
 @app.get("/")
