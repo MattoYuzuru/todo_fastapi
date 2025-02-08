@@ -1,15 +1,24 @@
 <template>
   <div class="container">
     <h2>Your ToDos</h2>
-    <ul class="list-group mt-4">
+    <ul class="todo-list">
       <li v-for="todo in todos" :key="todo.id"
-          class="list-group-item d-flex justify-content-between align-items-center">
-        <router-link :to="'/todos/' + todo.id">
-          <span>{{ todo.title }}</span>
-          <span>{{ todo.description }}</span>
-        </router-link>
-        <button @click="markCompleted(todo.id)">Complete</button>
-        <button @click="deleteTodo(todo.id)">Delete</button>
+          class="todo-item"
+          :class="{ completed: todo.status === 'Completed' }">
+        <div class="todo-content">
+          <router-link :to="'/todos/' + todo.id" class="todo-link">
+            <h3>{{ todo.title }}</h3>
+            <p>{{ todo.description }}</p>
+            <p><strong>Priority:</strong> {{ todo.priority }}</p>
+            <p><strong>Pomodoro Sessions:</strong> {{ todo.pomodoro_sessions }}</p>
+          </router-link>
+        </div>
+        <div class="todo-actions">
+          <button v-if="todo.status !== 'Completed'" @click="markCompleted(todo.id)" class="complete-btn">
+            Complete
+          </button>
+          <button @click="deleteTodo(todo.id)" class="delete-btn">Delete</button>
+        </div>
       </li>
     </ul>
   </div>
@@ -31,9 +40,7 @@ export default {
     async fetchTodos() {
       try {
         const response = await axios.get("http://localhost:8000/todos/all/", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
+          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
         this.todos = response.data;
       } catch (error) {
@@ -43,11 +50,9 @@ export default {
     async deleteTodo(todoId) {
       try {
         await axios.delete(`http://localhost:8000/todos/${todoId}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
+          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
-        await this.fetchTodos();
+        this.todos = this.todos.filter(todo => todo.id !== todoId);
       } catch (error) {
         console.error("Error deleting todo:", error);
       }
@@ -55,11 +60,10 @@ export default {
     async markCompleted(todoId) {
       try {
         await axios.post(`http://localhost:8000/todos/${todoId}/complete`, {}, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
+          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
-        await this.fetchTodos();
+        const todo = this.todos.find(todo => todo.id === todoId);
+        if (todo) todo.status = "Completed";
       } catch (error) {
         console.error("Error marking todo as completed:", error);
       }
@@ -73,25 +77,70 @@ export default {
   max-width: 600px;
   margin: auto;
   padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.list-group-item {
+.todo-list {
+  list-style: none;
+  padding: 0;
+}
+
+.todo-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 15px;
+  margin-bottom: 10px;
+  border: 2px solid black;
+  border-radius: 8px;
+  transition: background 0.3s ease;
+}
+
+.todo-item.completed {
+  background-color: #d4edda; /* Light green */
+  border-color: #28a745;
+}
+
+.todo-content {
+  flex: 1;
+}
+
+.todo-link {
+  text-decoration: none;
+  color: black;
+}
+
+.todo-actions {
+  display: flex;
+  gap: 10px;
 }
 
 button {
-  margin-left: 10px;
-  padding: 5px 10px;
+  padding: 8px 12px;
   border: none;
-  background-color: #007bff;
-  color: white;
+  border-radius: 5px;
   cursor: pointer;
-  border-radius: 4px;
+  font-weight: bold;
+  transition: background 0.3s;
 }
 
-button:hover {
-  background-color: #0056b3;
+.complete-btn {
+  background: #007bff;
+  color: white;
+}
+
+.complete-btn:hover {
+  background: #0056b3;
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #b02a37;
 }
 </style>
