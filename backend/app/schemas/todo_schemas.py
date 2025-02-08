@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List
 from datetime import date, datetime
+from typing import Optional, List
+
+from pydantic import BaseModel, Field
 
 
 class TodoItemBase(BaseModel):
@@ -11,6 +12,8 @@ class TodoItemBase(BaseModel):
     due_date: Optional[date] = None
     collaborators: List[int] = None
     pomodoro_sessions: int = 0
+    total_time_spent: int = 0
+    current_streak: int = 0
 
 
 class TodoItemCreate(TodoItemBase):
@@ -25,6 +28,8 @@ class TodoItemUpdate(BaseModel):
     due_date: Optional[date] = None
     collaborators: Optional[List[int]] = None
     pomodoro_sessions: Optional[int] = None
+    total_time_spent: Optional[int] = None
+    current_streak: Optional[int] = None
 
 
 class TodoItemResponse(TodoItemBase):

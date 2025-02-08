@@ -13,7 +13,7 @@ class TodoItem(Base):
     description = Column(Text, nullable=True)
     status = Column(String(20), nullable=False, default="Pending")
     priority = Column(String(10), nullable=True)
-    due_date = Column(Date, nullable=True)
+    due_date = Column(Date, nullable=True)  # fix due date so it had hours, minutes, seconds
     collaborators = Column(ARRAY(Integer), default=[])
     completed_at = Column(TIMESTAMP, nullable=True)
     pomodoro_sessions = Column(Integer, default=0)
