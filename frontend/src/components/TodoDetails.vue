@@ -1,30 +1,28 @@
 <template>
   <div class="todo-details">
     <h2>{{ todo.title }}</h2>
-    <p class="description">{{ todo.description }}</p>
+    <p>{{ todo.description }}</p>
 
-    <div class="details">
+    <div class="todo-info">
       <p><strong>Status:</strong> {{ todo.status }}</p>
       <p><strong>Priority:</strong> {{ todo.priority }}</p>
       <p v-if="todo.due_date"><strong>Due Date:</strong> {{ todo.due_date }}</p>
       <p v-if="todo.completed_at"><strong>Completed At:</strong> {{ todo.completed_at }}</p>
       <p><strong>Pomodoro Sessions:</strong> {{ todo.pomodoro_sessions }}</p>
-      <p><strong>Total Time Spent:</strong> {{ todo.total_time_spent }} seconds</p>
+      <p><strong>Total Time Spent:</strong> {{ formattedTotalTime }}</p>
       <p><strong>Current Streak:</strong> {{ todo.current_streak }} days</p>
     </div>
 
-    <div class="actions">
-      <button v-if="todo.status !== 'Completed'" @click="markCompleted" class="complete-btn">Mark as Completed</button>
-      <button @click="deleteTodo" class="delete-btn">Delete</button>
+    <div class="timer">
+      <h3>Pomodoro Timer</h3>
+      <p class="timer-display">{{ formattedTime }}</p>
+      <button @click="startPomodoro" :disabled="isRunning">Start</button>
+      <button @click="pausePomodoro" :disabled="!isRunning">Pause</button>
+      <button @click="finishPomodoro" :disabled="!isRunning">Finish</button>
     </div>
 
-    <div class="pomodoro-actions">
-      <h3>Pomodoro Timer</h3>
-      <p class="timer-display">{{ formatTime(timerSeconds) }}</p>
-      <button v-if="!isRunning" @click="startPomodoro" class="start-btn">Start</button>
-      <button v-if="isRunning" @click="pausePomodoro" class="pause-btn">Pause</button>
-      <button v-if="isRunning" @click="finishPomodoro" class="finish-btn">Finish</button>
-    </div>
+    <button @click="markCompleted">Mark as Completed</button>
+    <button @click="deleteTodo">Delete</button>
   </div>
 </template>
 
@@ -36,29 +34,45 @@ export default {
   data() {
     return {
       todo: {},
-      timerSeconds: 0,
+      timeInSeconds: 0,
       isRunning: false,
       timerInterval: null,
     };
   },
+  computed: {
+    formattedTime() {
+      const minutes = Math.floor(this.timeInSeconds / 60);
+      const seconds = this.timeInSeconds % 60;
+      return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    },
+    formattedTotalTime() {
+      if (!this.todo.total_time_spent) return "0:00"; // If no time recorded
+      const minutes = Math.floor(this.todo.total_time_spent / 60);
+      const seconds = this.todo.total_time_spent % 60;
+      return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    }
+  },
   async mounted() {
     await this.fetchTodo();
+  },
+  beforeUnmount() {
+    clearInterval(this.timerInterval);
   },
   methods: {
     async fetchTodo() {
       try {
         const response = await axios.get(`http://localhost:8000/todos/${this.id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
         this.todo = response.data;
       } catch (error) {
-        console.error("Error fetching todo:", error.response ? error.response.data : error);
+        console.error("Error fetching todo:", error);
       }
     },
     async deleteTodo() {
       try {
         await axios.delete(`http://localhost:8000/todos/${this.id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
         await this.$router.push('/');
       } catch (error) {
@@ -68,62 +82,55 @@ export default {
     async markCompleted() {
       try {
         await axios.post(`http://localhost:8000/todos/${this.id}/complete`, {}, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
-        this.todo.status = "Completed";
+        await this.fetchTodo();
       } catch (error) {
         console.error(error);
       }
     },
-    formatTime(seconds) {
-      const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
-      const secs = (seconds % 60).toString().padStart(2, "0");
-      return `${mins}:${secs}`;
-    },
     async startPomodoro() {
       try {
         await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/start`, {}, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
 
         this.isRunning = true;
         this.timerInterval = setInterval(() => {
-          this.timerSeconds++;
+          this.timeInSeconds++;
         }, 1000);
       } catch (error) {
-        console.error("Error starting Pomodoro session:", error);
+        console.error("Error starting pomodoro:", error);
       }
     },
     async pausePomodoro() {
       try {
         await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/pause`, {}, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
 
         this.isRunning = false;
         clearInterval(this.timerInterval);
       } catch (error) {
-        console.error("Error pausing Pomodoro session:", error);
+        console.error("Error pausing pomodoro:", error);
       }
     },
     async finishPomodoro() {
       try {
         await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/finish`, {}, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
 
-        // Stop timer and update UI
         this.isRunning = false;
         clearInterval(this.timerInterval);
 
-        // Convert seconds to minutes and update the total time
-        const minutesSpent = Math.floor(this.timerSeconds / 60);
-        this.todo.pomodoro_sessions += 1;
-        this.todo.total_time_spent += minutesSpent;
+        const secondsSpent = this.timeInSeconds;
 
-        this.timerSeconds = 0;
+        this.todo.total_time_spent += secondsSpent;
+        this.todo.pomodoro_sessions += 1;
+        this.timeInSeconds = 0;
       } catch (error) {
-        console.error("Error finishing Pomodoro session:", error);
+        console.error("Error finishing pomodoro:", error);
       }
     }
   }
@@ -145,25 +152,15 @@ h2 {
   text-align: center;
 }
 
-.description {
-  font-size: 16px;
-  color: #333;
-  margin-bottom: 15px;
+.todo-info {
+  margin: 10px 0;
 }
 
-.details {
-  background: #f8f9fa;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+.todo-info p {
+  margin: 5px 0;
 }
 
-.actions {
-  display: flex;
-  justify-content: space-between;
-}
-
-.pomodoro-actions {
+.timer {
   text-align: center;
   margin-top: 20px;
 }
@@ -171,61 +168,43 @@ h2 {
 .timer-display {
   font-size: 24px;
   font-weight: bold;
-  margin-bottom: 10px;
+  margin: 10px 0;
 }
 
 button {
-  padding: 8px 12px;
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
   transition: background 0.3s;
-  margin-right: 10px;
 }
 
-.complete-btn {
-  background: #007bff;
-  color: white;
+button:disabled {
+  background: gray;
+  cursor: not-allowed;
 }
 
-.complete-btn:hover {
-  background: #0056b3;
+button:not(:disabled):hover {
+  opacity: 0.8;
 }
 
-.delete-btn {
-  background: #dc3545;
-  color: white;
-}
-
-.delete-btn:hover {
-  background: #b02a37;
-}
-
-.start-btn {
+button:nth-child(1) {
   background: #28a745;
   color: white;
 }
 
-.start-btn:hover {
-  background: #218838;
-}
-
-.pause-btn {
+button:nth-child(2) {
   background: #ffc107;
   color: black;
 }
 
-.pause-btn:hover {
-  background: #e0a800;
-}
-
-.finish-btn {
-  background: #17a2b8;
+button:nth-child(3) {
+  background: #dc3545;
   color: white;
 }
 
-.finish-btn:hover {
-  background: #138496;
-}
 </style>
