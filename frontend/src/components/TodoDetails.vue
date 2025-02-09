@@ -9,7 +9,7 @@
       <p v-if="todo.due_date"><strong>Due Date:</strong> {{ todo.due_date }}</p>
       <p v-if="todo.completed_at"><strong>Completed At:</strong> {{ todo.completed_at }}</p>
       <p><strong>Pomodoro Sessions:</strong> {{ todo.pomodoro_sessions }}</p>
-      <p><strong>Total Time Spent:</strong> {{ todo.total_time_spent }} minutes</p>
+      <p><strong>Total Time Spent:</strong> {{ todo.total_time_spent }} seconds</p>
       <p><strong>Current Streak:</strong> {{ todo.current_streak }} days</p>
     </div>
 
@@ -20,9 +20,10 @@
 
     <div class="pomodoro-actions">
       <h3>Pomodoro Timer</h3>
-      <button @click="startPomodoro" class="start-btn">Start</button>
-      <button @click="pausePomodoro" class="pause-btn">Pause</button>
-      <button @click="finishPomodoro" class="finish-btn">Finish</button>
+      <p class="timer-display">{{ formatTime(timerSeconds) }}</p>
+      <button v-if="!isRunning" @click="startPomodoro" class="start-btn">Start</button>
+      <button v-if="isRunning" @click="pausePomodoro" class="pause-btn">Pause</button>
+      <button v-if="isRunning" @click="finishPomodoro" class="finish-btn">Finish</button>
     </div>
   </div>
 </template>
@@ -34,7 +35,10 @@ export default {
   props: ['id'],
   data() {
     return {
-      todo: {}
+      todo: {},
+      timerSeconds: 0,
+      isRunning: false,
+      timerInterval: null,
     };
   },
   async mounted() {
@@ -44,7 +48,7 @@ export default {
     async fetchTodo() {
       try {
         const response = await axios.get(`http://localhost:8000/todos/${this.id}`, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         this.todo = response.data;
       } catch (error) {
@@ -54,7 +58,7 @@ export default {
     async deleteTodo() {
       try {
         await axios.delete(`http://localhost:8000/todos/${this.id}`, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         await this.$router.push('/');
       } catch (error) {
@@ -64,18 +68,28 @@ export default {
     async markCompleted() {
       try {
         await axios.post(`http://localhost:8000/todos/${this.id}/complete`, {}, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         this.todo.status = "Completed";
       } catch (error) {
         console.error(error);
       }
     },
+    formatTime(seconds) {
+      const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
+      const secs = (seconds % 60).toString().padStart(2, "0");
+      return `${mins}:${secs}`;
+    },
     async startPomodoro() {
       try {
         await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/start`, {}, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
+
+        this.isRunning = true;
+        this.timerInterval = setInterval(() => {
+          this.timerSeconds++;
+        }, 1000);
       } catch (error) {
         console.error("Error starting Pomodoro session:", error);
       }
@@ -83,8 +97,11 @@ export default {
     async pausePomodoro() {
       try {
         await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/pause`, {}, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
+
+        this.isRunning = false;
+        clearInterval(this.timerInterval);
       } catch (error) {
         console.error("Error pausing Pomodoro session:", error);
       }
@@ -92,9 +109,19 @@ export default {
     async finishPomodoro() {
       try {
         await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/finish`, {}, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
+
+        // Stop timer and update UI
+        this.isRunning = false;
+        clearInterval(this.timerInterval);
+
+        // Convert seconds to minutes and update the total time
+        const minutesSpent = Math.floor(this.timerSeconds / 60);
         this.todo.pomodoro_sessions += 1;
+        this.todo.total_time_spent += minutesSpent;
+
+        this.timerSeconds = 0;
       } catch (error) {
         console.error("Error finishing Pomodoro session:", error);
       }
@@ -139,6 +166,12 @@ h2 {
 .pomodoro-actions {
   text-align: center;
   margin-top: 20px;
+}
+
+.timer-display {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
 button {
