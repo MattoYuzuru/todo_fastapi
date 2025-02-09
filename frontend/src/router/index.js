@@ -3,9 +3,9 @@ import Router from 'vue-router';
 import UserRegister from '../components/UserRegister.vue';
 import UserLogin from '../components/UserLogin.vue';
 import HomePage from '../components/HomePage.vue';
-import AddToDo from '../components/AddTodo.vue';
 import TodoDetails from '../components/TodoDetails.vue';
 import TodoList from "@/components/TodoList.vue";
+import AddTodo from "@/components/AddTodo.vue";
 
 Vue.use(Router);
 
@@ -27,8 +27,8 @@ const routes = [
     },
     {
         path: '/todos/create',
-        name: 'CreateToDo',
-        component: AddToDo
+        name: 'CreateTodo',
+        component: AddTodo
     },
     {
         path: '/todos/all/',
