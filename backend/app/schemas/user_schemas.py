@@ -6,6 +6,10 @@ from datetime import datetime
 class UserBase(BaseModel):
     username: str = Field(..., max_length=50)
     email: EmailStr
+    current_streak: int
+    longest_streak: int
+    pomodoro_sessions: int
+    tasks_completed: int
 
 
 class UserCreate(UserBase):

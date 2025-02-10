@@ -126,6 +126,7 @@ def mark_task_as_completed(db: Session, todo_id: int, current_user: User = Depen
         raise HTTPException(status_code=400, detail="Task is already completed")
 
     todo.status = "Completed"
+    current_user.tasks_completed += 1
     todo.completed_at = datetime.now(TIME_ZONE)
     db.commit()
     db.refresh(todo)

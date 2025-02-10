@@ -25,7 +25,7 @@
     </div>
     <div class="create-button-container">
       <router-link to="/todos/create">
-        <button class="add-button">➕ Add New Todo</button>
+        <button class="add-button">📃 Add New Todo</button>
       </router-link>
     </div>
   </div>
@@ -117,7 +117,6 @@ export default {
   border-radius: 5px;
 }
 
-/* Styling for completed todos */
 .completed-todo {
   border-color: #28a745;
   background-color: #daf5da;

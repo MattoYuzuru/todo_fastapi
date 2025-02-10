@@ -62,7 +62,7 @@ def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return users
 
 
-@router.get("/users/me", response_model=UserResponse)
+@router.get("/users/me/", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
 

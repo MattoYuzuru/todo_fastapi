@@ -14,7 +14,7 @@
     </div>
 
     <div class="timer">
-      <h3>Pomodoro Timer</h3>
+      <h3>🍅Pomodoro Timer</h3>
       <p class="timer-display">{{ formattedTime }}</p>
       <button @click="startPomodoro" :disabled="isRunning">Start</button>
       <button @click="pausePomodoro" :disabled="!isRunning">Pause</button>
@@ -23,6 +23,11 @@
 
     <button @click="markCompleted">Mark as Completed</button>
     <button @click="deleteTodo">Delete</button>
+    <div class="all-todos-button">
+      <router-link to="/todos/all/">
+        <button class="add-button">Go back to Todos</button>
+      </router-link>
+    </div>
   </div>
 </template>
 
@@ -46,7 +51,7 @@ export default {
       return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     },
     formattedTotalTime() {
-      if (!this.todo.total_time_spent) return "0:00"; // If no time recorded
+      if (!this.todo.total_time_spent) return "0:00";
       const minutes = Math.floor(this.todo.total_time_spent / 60);
       const seconds = this.todo.total_time_spent % 60;
       return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
@@ -169,6 +174,12 @@ h2 {
   font-size: 24px;
   font-weight: bold;
   margin: 10px 0;
+}
+
+.all-todos-button {
+  max-width: 600px;
+  margin: 20px auto;
+  text-align: center;
 }
 
 button {
