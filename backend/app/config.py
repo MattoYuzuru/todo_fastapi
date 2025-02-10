@@ -11,3 +11,5 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM')
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 TIME_ZONE = pytz.timezone("Europe/Moscow")
+REDIS_HOST = "redis"  # docker image name
+REDIS_PORT = 6379
