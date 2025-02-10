@@ -1,15 +1,17 @@
-from datetime import datetime
+import json
+from datetime import datetime, timezone
 
+import redis
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..config import TIME_ZONE
+from ..config import TIME_ZONE, REDIS_HOST, REDIS_PORT
 from ..crud.user_crud import get_current_user
 from ..models import TodoItem
 from ..models.user import User
 from ..schemas.todo_schemas import TodoItemCreate, TodoItemUpdate
 
-active_pomodoros = {}
+redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
 
 
 def create_todo_item(db: Session, todo_data: TodoItemCreate, current_user: User = Depends(get_current_user)):
@@ -66,52 +68,55 @@ def start_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_c
     if not todo:
         raise HTTPException(status_code=404, detail="Todo not found")
 
-    if todo.id in active_pomodoros:
+    key = f"pomodoro:{current_user.id}:{todo_id}"
+    if redis_client.exists(key):
         raise HTTPException(status_code=400, detail="Pomodoro already active for this task")
 
-    active_pomodoros[todo_id] = {
-        "start_time": datetime.now(TIME_ZONE),
-    }
+    start_time = datetime.now(timezone.utc).isoformat()
+    redis_client.set(key, json.dumps({"start_time": start_time}), ex=60 * 60)
+
     return {"message": "Pomodoro started"}
 
 
 def pause_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):
-    if todo_id not in active_pomodoros:
+    key = f"pomodoro:{current_user.id}:{todo_id}"
+    session_data = redis_client.get(key)
+    if not session_data:
         raise HTTPException(status_code=400, detail="No active pomodoro session for this task")
 
-    session = active_pomodoros.pop(todo_id)
-    elapsed_time = (datetime.now(TIME_ZONE) - session["start_time"]).total_seconds()
+    session = json.loads(session_data)
+    elapsed_time = (datetime.now(timezone.utc) - datetime.fromisoformat(session["start_time"])).total_seconds()
 
     todo = db.query(TodoItem).filter(TodoItem.id == todo_id, TodoItem.user_id == current_user.id).first()
     if not todo:
         raise HTTPException(status_code=404, detail="Todo not found")
 
-    if todo.total_time_spent is None:
-        todo.total_time_spent = 0
+    todo.total_time_spent = (todo.total_time_spent or 0) + int(elapsed_time)
 
-    todo.total_time_spent += int(elapsed_time)
+    redis_client.delete(key)
     db.commit()
     db.refresh(todo)
     return {"message": "Pomodoro paused", "elapsed_time": elapsed_time}
 
 
 def finish_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):
-    if todo_id not in active_pomodoros:
+    key = f"pomodoro:{current_user.id}:{todo_id}"
+    session_data = redis_client.get(key)
+    if not session_data:
         raise HTTPException(status_code=400, detail="No active pomodoro session for this task")
 
-    session = active_pomodoros.pop(todo_id)
-    elapsed_time = (datetime.now(TIME_ZONE) - session["start_time"]).total_seconds()
+    session = json.loads(session_data)
+    elapsed_time = (datetime.now(timezone.utc) - datetime.fromisoformat(session["start_time"])).total_seconds()
 
     todo = db.query(TodoItem).filter(TodoItem.id == todo_id, TodoItem.user_id == current_user.id).first()
     if not todo:
         raise HTTPException(status_code=404, detail="Todo not found")
 
-    if todo.total_time_spent is None:
-        todo.total_time_spent = 0
-
-    todo.total_time_spent += int(elapsed_time)
+    todo.total_time_spent = (todo.total_time_spent or 0) + int(elapsed_time)
     todo.pomodoro_sessions += 1
     current_user.pomodoro_sessions += 1
+
+    redis_client.delete(key)
     db.commit()
     db.refresh(todo)
     return {"message": "Pomodoro finished", "elapsed_time": elapsed_time, "total_pomodoros": todo.pomodoro_sessions}
