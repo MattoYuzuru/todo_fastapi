@@ -49,7 +49,6 @@ export default {
 </script>
 
 <style scoped>
-/* Container styles */
 .login-container {
   display: flex;
   justify-content: center;
@@ -58,7 +57,6 @@ export default {
   background-color: #f8f9fa;
 }
 
-/* Card-style login box */
 .login-card {
   width: 100%;
   max-width: 400px;
@@ -69,10 +67,11 @@ export default {
   text-align: center;
 }
 
-/* Form styling */
 .form-group {
-  margin-bottom: 15px;
-  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 20px;
 }
 
 label {
@@ -83,10 +82,11 @@ label {
 
 input {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid #ccc;
   border-radius: 5px;
   font-size: 16px;
+  box-sizing: border-box;
 }
 
 .btn-primary {
