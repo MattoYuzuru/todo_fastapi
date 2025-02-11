@@ -9,31 +9,34 @@ _What I want/ed to implement to my app_
 1. Task management with categories and priorities.
 2. Calendar integration.
 3. Pomodoro timer in each todo task.
-5. Collaboration for group projects.
+5. Collaboration for projects.
 6. Visual statistics.
-7. Gamification with rewards and streak tracking.
-8. Mobile-friendly design.
-
-Getting Started
-To get a local copy up and running, follow these steps.
-
+7. Streak tracking.
+8. Friendly design.
 
 ## Project Structure
 
 ```
-├───.env 
-├───.env_db 
+todo_fastapi
+├───.env
+├───.env_db
 ├───.gitignore
 ├───LICENCE
 ├───README.md
+├───alembic.ini
 ├───backend
 │   ├───Dockerfile
+│   ├───alembic
+│   │   ├───README
+│   │   ├───env.py
+│   │   ├───script.py.mako
+│   │   └───versions
+│   │       ├───79fbd9de33e5_add_total_time_spent_cur_streak_to_todo_.py
+│   │       └───d73804355bae_initial_migration.py
 │   ├───app
 │   │   ├───__init__.py
-│   │   ├───config.py
 │   │   ├───auth.py
-│   │   ├───main.py
-│   │   ├───requirements.txt
+│   │   ├───config.py
 │   │   ├───crud
 │   │   │   ├───__init__.py
 │   │   │   ├───todo_crud.py
@@ -41,6 +44,7 @@ To get a local copy up and running, follow these steps.
 │   │   ├───db
 │   │   │   ├───__init__.py
 │   │   │   └───session.py
+│   │   ├───main.py
 │   │   ├───models
 │   │   │   ├───__init__.py
 │   │   │   ├───base.py
@@ -55,62 +59,67 @@ To get a local copy up and running, follow these steps.
 │   │       ├───todo_schemas.py
 │   │       ├───token_schemas.py
 │   │       └───user_schemas.py
+│   ├───requirements.txt
 │   └───tests
 │       ├───__init__.py
 │       └───test_todo.py
-├───frontend
-│   ├───src
-│   │   ├───App.vue
-│   │   ├───main.js
-│   │   ├───components
-│   │   │   ├───AddTodo.vue
-│   │   │   ├───TodoList.vue
-│   │   │   ├───HomePage.vue
-│   │   │   ├───PomodoroPage.vue
-│   │   │   ├───TodoDetails.vue
-│   │   │   ├───UserLogin.vue
-│   │   │   ├───UserRegister.vue
-│   │   │   └───TimerPage.vue
-│   │   ├───router
-│   │   │   └───index.js
-│   │   ├───store
-│   │   │   └───index.js
-│   │   └───assest
-│   │       └───custom.css
-│   ├───babel.config.js
-│   ├───Dockerfile
-│   ├───jsconfig.json
-│   ├───package.json
-│   ├───package-lock.json
-│   └───vue.config.js
-└───docker-compose.yml
+├───docker-compose.yml
+└───frontend
+    ├───Dockerfile
+    ├───babel.config.js
+    ├───jsconfig.json
+    ├───package-lock.json
+    ├───package.json
+    ├───public
+    │   └───favicon.ico
+    ├───src
+    │   ├───App.vue
+    │   ├───assets
+    │   │   └───custom.css
+    │   ├───components
+    │   │   ├───AddTodo.vue
+    │   │   ├───HomePage.vue
+    │   │   ├───PomodoroPage.vue
+    │   │   ├───TimerPage.vue
+    │   │   ├───TodoDetails.vue
+    │   │   ├───TodoList.vue
+    │   │   ├───UserLogin.vue
+    │   │   └───UserRegister.vue
+    │   ├───main.js
+    │   ├───router
+    │   │   └───index.js
+    │   └───store
+    │       └───index.js
+    └───vue.config.js
 ```
 
 ## Tech Stack
-Backend: 
+
+Backend:
+
 * FastAPI
 
 DB, ORM, migrations management:
+
 * PostgreSQL
 * Alchemy
 * Alembic
 
-Frontend: 
+Frontend:
+
 * Vue.js
 
 Deployment:
+
 * Docker
 * Nginx
 
 etc
 
 
-## Requirements and Installation
+# Getting Started
+To get a local copy up and running, follow these steps.
 
-* Python 3.11 or higher 
-* Docker 
-* Backend (FastAPI) 
-* Frontend (Vue.js) 
 
 #### Clone the repository:
 
@@ -118,52 +127,50 @@ etc
 
 git clone https://github.com/MattoYuzuru/todo_fastapi.git
 cd todo_fastapi
-
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
 ```
 
 #### Configure all .env files
 
-Run this command and copy the secret key\
+Run this command and copy the secret key
+
+
 It's for User Authentication (SECRET_KEY in .env)
+
 ```bash
 
 openssl rand -hex 32
 ```
 
-There are 2 .env in my project. 
+There are 2 .env in my project.
+
 1) .env (for all config variables)
+
 ```
 DATABASE_URL=postgresql+psycopg2://username:password@localhost:port/db_name
 SECRET_KEY=your_key
 ALGORITHM=HS256
 ```
+
 2) .env_db (to run postrgesql via its docker image)
+
 ```
 POSTGRES_USER=username
 POSTGRES_PASSWORD=password
 POSTGRES_DB=db_name
 ```
 
-#### Frontend installations
-Install nodejs npm (if not installed)
 
-Then run this:
-```bash
-
-nmp install frontend/package.json
-```
-
-
-#### Run docker-compose to init data base
+#### Run docker-compose to start Todo App
 
 ```bash
 
-docker compose up -d
+docker compose up -d --build
 ```
+
+
+#### Access Site
+http://localhost:8080/register
 
 ## Contributing
 
-Contributions are welcome! My code is bad pls comment :(
+Contributions are welcome! This is my first time using these technologies.
