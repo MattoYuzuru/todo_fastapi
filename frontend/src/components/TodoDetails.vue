@@ -23,11 +23,16 @@
       <button @click="finishPomodoro" :disabled="!isRunning">Finish</button>
     </div>
 
-    <button @click="markCompleted">Mark as Completed</button>
+    <button v-if="todo.status !== 'Completed'" @click="markCompleted">Mark as Completed</button>
     <button @click="deleteTodo">Delete</button>
-    <router-link to="/todos/all/">
-      <button class="all-button">Go back to Todos</button>
-    </router-link>
+    <div class="navigation-buttons">
+      <router-link to="/">
+        <button class="all-button">Go back to Menu</button>
+      </router-link>
+      <router-link to="/todos/all/">
+        <button class="all-button">Go back to Todos</button>
+      </router-link>
+    </div>
   </div>
 </template>
 
@@ -190,6 +195,7 @@ export default {
   }
 };
 </script>
+
 <style scoped>
 .todo-details {
   max-width: 600px;
@@ -260,7 +266,6 @@ button:nth-child(3) {
   color: white;
 }
 
-
 .all-button {
   display: inline-block;
   padding: 10px 20px;
@@ -271,10 +276,16 @@ button:nth-child(3) {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.4s ease;
+  margin-right: 10px;
 }
 
 .all-button:hover {
   background-color: #2377c4;
 }
 
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
 </style>
