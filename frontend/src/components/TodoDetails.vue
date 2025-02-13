@@ -1,20 +1,22 @@
 <template>
   <div class="todo-details">
     <h2>{{ todo.title }}</h2>
-    <p>{{ todo.description }}</p>
+    <h4>{{ todo.description }}</h4>
 
     <div class="todo-info">
       <p><strong>Status:</strong> {{ todo.status }}</p>
       <p><strong>Priority:</strong> {{ todo.priority }}</p>
+      <br>
       <p v-if="todo.due_date"><strong>Due Date:</strong> {{ todo.due_date }}</p>
-      <p v-if="todo.completed_at"><strong>Completed At:</strong> {{ todo.completed_at }}</p>
+      <p v-if="todo.completed_at"><strong>Completed At:</strong> {{ formattedCompletedAt }}</p>
+      <br>
       <p><strong>Pomodoro Sessions:</strong> {{ todo.pomodoro_sessions }}</p>
       <p><strong>Total Time Spent:</strong> {{ formattedTotalTime }}</p>
       <p><strong>Current Streak:</strong> {{ todo.current_streak }} days</p>
     </div>
 
     <div class="timer">
-      <h3>🍅Pomodoro Timer</h3>
+      <h3>🍅 Pomodoro Timer</h3>
       <p class="timer-display">{{ formattedTime }}</p>
       <button @click="startPomodoro" :disabled="isRunning">Start</button>
       <button @click="pausePomodoro" :disabled="!isRunning">Pause</button>
@@ -23,11 +25,9 @@
 
     <button @click="markCompleted">Mark as Completed</button>
     <button @click="deleteTodo">Delete</button>
-    <div class="all-todos-button">
-      <router-link to="/todos/all/">
-        <button class="add-button">Go back to Todos</button>
-      </router-link>
-    </div>
+    <router-link to="/todos/all/">
+      <button class="all-button">Go back to Todos</button>
+    </router-link>
   </div>
 </template>
 
@@ -42,6 +42,7 @@ export default {
       timeInSeconds: 0,
       isRunning: false,
       timerInterval: null,
+      redisFetchInterval: null,
     };
   },
   computed: {
@@ -55,13 +56,23 @@ export default {
       const minutes = Math.floor(this.todo.total_time_spent / 60);
       const seconds = this.todo.total_time_spent % 60;
       return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    },
+    formattedCompletedAt() {
+      return this.todo.completed_at ? this.todo.completed_at.split("T")[0] : "N/A";
     }
+
   },
   async mounted() {
+    window.addEventListener("beforeunload", this.confirmReload);
     await this.fetchTodo();
+    this.fetchPomodoroTime();
+    // i fetch from Redis every 30 seconds to stay in sync
+    this.redisFetchInterval = setInterval(this.fetchPomodoroTime, 30000);
   },
   beforeUnmount() {
+    window.removeEventListener("beforeunload", this.confirmReload);
     clearInterval(this.timerInterval);
+    clearInterval(this.redisFetchInterval);
   },
   methods: {
     async fetchTodo() {
@@ -94,50 +105,83 @@ export default {
         console.error(error);
       }
     },
+    confirmReload(event) {
+      event.preventDefault();
+      event.returnValue = "Do you want to reload the page? Changes you made may not be saved.";
+    },
+    async fetchPomodoroTime() {
+      try {
+        const response = await axios.get(`http://localhost:8000/todos/${this.id}/pomodoro/status`, {
+          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+        });
+
+        this.timeInSeconds = response.data.elapsed_time;
+        this.isRunning = response.data.is_running;
+
+        if (this.isRunning) {
+          this.startLocalTimer();
+        } else {
+          clearInterval(this.timerInterval);
+        }
+      } catch (error) {
+        console.error("Error fetching Pomodoro time:", error);
+      }
+    },
     async startPomodoro() {
       try {
-        await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/start`, {}, {
+        const response = await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/start`, {}, {
           headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
 
         this.isRunning = true;
-        this.timerInterval = setInterval(() => {
-          this.timeInSeconds++;
-        }, 1000);
+        this.timeInSeconds = Math.round(response.data.elapsed_time) || 0;
+        this.startLocalTimer();
       } catch (error) {
         console.error("Error starting pomodoro:", error);
       }
     },
     async pausePomodoro() {
       try {
-        await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/pause`, {}, {
+        const response = await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/pause`, {}, {
           headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
 
         this.isRunning = false;
         clearInterval(this.timerInterval);
+        this.timeInSeconds = Math.round(response.data.elapsed_time);
+        await this.fetchTodo();
       } catch (error) {
         console.error("Error pausing pomodoro:", error);
       }
     },
     async finishPomodoro() {
       try {
-        await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/finish`, {}, {
+        const response = await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/finish`, {}, {
           headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
 
         this.isRunning = false;
         clearInterval(this.timerInterval);
 
-        const secondsSpent = this.timeInSeconds;
-
-        this.todo.total_time_spent += secondsSpent;
-        this.todo.pomodoro_sessions += 1;
+        // Update frontend state
         this.timeInSeconds = 0;
+        this.todo.total_time_spent += response.data.elapsed_time;
+        this.todo.pomodoro_sessions += 1;
+
+        await this.fetchTodo(); // Refresh the UI with updated data
       } catch (error) {
         console.error("Error finishing pomodoro:", error);
       }
-    }
+    },
+    startLocalTimer() {
+      clearInterval(this.timerInterval);
+      this.timerInterval = setInterval(() => {
+        this.timeInSeconds++;
+        if (this.timeInSeconds >= 1500) { // 25 min = 1500 seconds
+          this.finishPomodoro();
+        }
+      }, 1000);
+    },
   }
 };
 </script>
@@ -176,12 +220,6 @@ h2 {
   margin: 10px 0;
 }
 
-.all-todos-button {
-  max-width: 600px;
-  margin: 20px auto;
-  text-align: center;
-}
-
 button {
   display: block;
   width: 100%;
@@ -195,7 +233,7 @@ button {
 }
 
 button:disabled {
-  background: gray;
+  background: #b9b9b9;
   cursor: not-allowed;
 }
 
@@ -204,7 +242,7 @@ button:not(:disabled):hover {
 }
 
 button:nth-child(1) {
-  background: #28a745;
+  background: #3ea9db;
   color: white;
 }
 
@@ -216,6 +254,23 @@ button:nth-child(2) {
 button:nth-child(3) {
   background: #dc3545;
   color: white;
+}
+
+
+.all-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #4391dd;
+  color: white;
+  border: none;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.4s ease;
+}
+
+.all-button:hover {
+  background-color: #2377c4;
 }
 
 </style>

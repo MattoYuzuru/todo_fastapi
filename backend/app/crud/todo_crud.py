@@ -69,13 +69,18 @@ def start_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_c
         raise HTTPException(status_code=404, detail="Todo not found")
 
     key = f"pomodoro:{current_user.id}:{todo_id}"
-    if redis_client.exists(key):
-        raise HTTPException(status_code=400, detail="Pomodoro already active for this task")
+    session_data = redis_client.get(key)
 
     start_time = datetime.now(timezone.utc).isoformat()
-    redis_client.set(key, json.dumps({"start_time": start_time}), ex=60 * 60)
+    elapsed_time = 0
 
-    return {"message": "Pomodoro started"}
+    if session_data:
+        session = json.loads(session_data)
+        elapsed_time = session.get("elapsed_time", 0)
+
+    redis_client.set(key, json.dumps({"start_time": start_time, "elapsed_time": elapsed_time}), ex=60 * 120)
+
+    return {"message": "Pomodoro started", "elapsed_time": elapsed_time}
 
 
 def pause_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):
@@ -93,7 +98,8 @@ def pause_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_c
 
     todo.total_time_spent = (todo.total_time_spent or 0) + int(elapsed_time)
 
-    redis_client.delete(key)
+    redis_client.set(key, json.dumps({"elapsed_time": elapsed_time}), ex=60 * 120)
+
     db.commit()
     db.refresh(todo)
     return {"message": "Pomodoro paused", "elapsed_time": elapsed_time}
@@ -120,6 +126,18 @@ def finish_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_
     db.commit()
     db.refresh(todo)
     return {"message": "Pomodoro finished", "elapsed_time": elapsed_time, "total_pomodoros": todo.pomodoro_sessions}
+
+
+def get_pomodoro(todo_id: int, current_user: User = Depends(get_current_user)):
+    key = f"pomodoro:{current_user.id}:{todo_id}"
+    session_data = redis_client.get(key)
+
+    if not session_data:
+        return {"elapsed_time": 0, "is_running": False}
+
+    session = json.loads(session_data)
+    elapsed_time = (datetime.now(timezone.utc) - datetime.fromisoformat(session["start_time"])).total_seconds()
+    return {"elapsed_time": int(elapsed_time), "is_running": True}
 
 
 def mark_task_as_completed(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):

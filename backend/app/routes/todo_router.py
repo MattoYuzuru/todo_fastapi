@@ -10,7 +10,8 @@ from ..crud.todo_crud import (create_todo_item,
                               pause_pomodoro,
                               finish_pomodoro,
                               mark_task_as_completed,
-                              get_completed_tasks
+                              get_completed_tasks,
+                              get_pomodoro
                               )
 from ..crud.user_crud import get_current_user
 from ..db.session import get_db
@@ -80,3 +81,8 @@ def pause_pomodoro_timer(todo_id: int, db: Session = Depends(get_db), current_us
 @router.post("/todos/{todo_id}/pomodoro/finish")
 def finish_pomodoro_timer(todo_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return finish_pomodoro(db, todo_id, current_user)
+
+
+@router.get("/todos/{todo_id}/pomodoro/status")
+def get_pomodoro_status(todo_id: int, current_user: User = Depends(get_current_user)):
+    return get_pomodoro(todo_id, current_user)
