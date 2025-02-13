@@ -2,7 +2,7 @@
   <div>
     <div class="container">
       <h2>Your ToDos</h2>
-      <ul class="list-group mt-4">
+      <ul v-if="todos.length" class="list-group mt-4">
         <li v-for="todo in todos" :key="todo.id"
             :class="['list-group-item', { 'completed-todo': todo.status === 'Completed' }]">
           <router-link :to="'/todos/' + todo.id" class="todo-link">
@@ -16,12 +16,13 @@
             <button @click="deleteTodo(todo.id)">Delete</button>
           </div>
         </li>
+        <div class="pagination">
+          <button @click="prevPage" :disabled="currentPage === 1">Previous</button>
+          <span>Page {{ currentPage }}</span>
+          <button @click="nextPage" :disabled="todos.length < limit">Next</button>
+        </div>
       </ul>
-      <div class="pagination">
-        <button @click="prevPage" :disabled="currentPage === 1">Previous</button>
-        <span>Page {{ currentPage }}</span>
-        <button @click="nextPage" :disabled="todos.length < limit">Next</button>
-      </div>
+      <p v-else class="no-todos">There are no todos yet.</p>
     </div>
     <div class="create-button-container">
       <router-link to="/todos/create">
@@ -194,5 +195,12 @@ button:disabled {
 
 .all-button:hover {
   background-color: #218838;
+}
+
+.no-todos {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 18px;
+  color: #777;
 }
 </style>
