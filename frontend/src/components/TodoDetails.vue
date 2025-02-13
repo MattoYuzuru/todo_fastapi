@@ -43,6 +43,8 @@ export default {
       isRunning: false,
       timerInterval: null,
       redisFetchInterval: null,
+      startTime: null,
+      accumulatedTime: 0,
     };
   },
   computed: {
@@ -60,13 +62,11 @@ export default {
     formattedCompletedAt() {
       return this.todo.completed_at ? this.todo.completed_at.split("T")[0] : "N/A";
     }
-
   },
   async mounted() {
     window.addEventListener("beforeunload", this.confirmReload);
     await this.fetchTodo();
     this.fetchPomodoroTime();
-    // i fetch from Redis every 30 seconds to stay in sync
     this.redisFetchInterval = setInterval(this.fetchPomodoroTime, 30000);
   },
   beforeUnmount() {
@@ -117,6 +117,7 @@ export default {
 
         this.timeInSeconds = response.data.elapsed_time;
         this.isRunning = response.data.is_running;
+        this.accumulatedTime = Math.round(response.data.accumulated_time) || 0;
 
         if (this.isRunning) {
           this.startLocalTimer();
@@ -134,7 +135,8 @@ export default {
         });
 
         this.isRunning = true;
-        this.timeInSeconds = Math.round(response.data.elapsed_time) || 0;
+        this.startTime = new Date(response.data.start_time);
+        this.accumulatedTime = Math.round(response.data.accumulated_time) || 0;
         this.startLocalTimer();
       } catch (error) {
         console.error("Error starting pomodoro:", error);
@@ -142,13 +144,17 @@ export default {
     },
     async pausePomodoro() {
       try {
-        const response = await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/pause`, {}, {
+        await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/pause`, {}, {
           headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
         });
 
         this.isRunning = false;
         clearInterval(this.timerInterval);
-        this.timeInSeconds = Math.round(response.data.elapsed_time);
+
+        const elapsedTime = (new Date() - this.startTime) / 1000;
+        this.accumulatedTime += Math.round(elapsedTime);
+        this.timeInSeconds = this.accumulatedTime;
+
         await this.fetchTodo();
       } catch (error) {
         console.error("Error pausing pomodoro:", error);
@@ -163,12 +169,11 @@ export default {
         this.isRunning = false;
         clearInterval(this.timerInterval);
 
-        // Update frontend state
         this.timeInSeconds = 0;
-        this.todo.total_time_spent += response.data.elapsed_time;
+        this.todo.total_time_spent += Math.round(response.data.elapsed_time);
         this.todo.pomodoro_sessions += 1;
 
-        await this.fetchTodo(); // Refresh the UI with updated data
+        await this.fetchTodo();
       } catch (error) {
         console.error("Error finishing pomodoro:", error);
       }
@@ -176,8 +181,8 @@ export default {
     startLocalTimer() {
       clearInterval(this.timerInterval);
       this.timerInterval = setInterval(() => {
-        this.timeInSeconds++;
-        if (this.timeInSeconds >= 1500) { // 25 min = 1500 seconds
+        this.timeInSeconds = Math.round(this.accumulatedTime) + Math.floor((new Date() - this.startTime) / 1000);
+        if (this.timeInSeconds >= 1500) {
           this.finishPomodoro();
         }
       }, 1000);
@@ -185,7 +190,6 @@ export default {
   }
 };
 </script>
-
 <style scoped>
 .todo-details {
   max-width: 600px;

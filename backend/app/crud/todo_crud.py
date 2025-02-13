@@ -72,15 +72,15 @@ def start_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_c
     session_data = redis_client.get(key)
 
     start_time = datetime.now(timezone.utc).isoformat()
-    elapsed_time = 0
+    accumulated_time = 0
 
     if session_data:
         session = json.loads(session_data)
-        elapsed_time = session.get("elapsed_time", 0)
+        accumulated_time = session.get("accumulated_time", 0)
 
-    redis_client.set(key, json.dumps({"start_time": start_time, "elapsed_time": elapsed_time}), ex=60 * 120)
+    redis_client.set(key, json.dumps({"start_time": start_time, "accumulated_time": accumulated_time}), ex=60 * 120)
 
-    return {"message": "Pomodoro started", "elapsed_time": elapsed_time}
+    return {"message": "Pomodoro started", "start_time": start_time, "accumulated_time": accumulated_time}
 
 
 def pause_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):
@@ -96,13 +96,13 @@ def pause_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_c
     if not todo:
         raise HTTPException(status_code=404, detail="Todo not found")
 
-    todo.total_time_spent = (todo.total_time_spent or 0) + int(elapsed_time)
+    accumulated_time = session.get("accumulated_time", 0) + elapsed_time
 
-    redis_client.set(key, json.dumps({"elapsed_time": elapsed_time}), ex=60 * 120)
+    redis_client.set(key, json.dumps({"accumulated_time": accumulated_time}), ex=60 * 120)
 
     db.commit()
     db.refresh(todo)
-    return {"message": "Pomodoro paused", "elapsed_time": elapsed_time}
+    return {"message": "Pomodoro paused", "elapsed_time": accumulated_time}
 
 
 def finish_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):
@@ -118,14 +118,16 @@ def finish_pomodoro(db: Session, todo_id: int, current_user: User = Depends(get_
     if not todo:
         raise HTTPException(status_code=404, detail="Todo not found")
 
-    todo.total_time_spent = (todo.total_time_spent or 0) + int(elapsed_time)
+    accumulated_time = session.get("accumulated_time", 0) + elapsed_time
+
+    todo.total_time_spent = (todo.total_time_spent or 0) + int(accumulated_time)
     todo.pomodoro_sessions += 1
     current_user.pomodoro_sessions += 1
 
     redis_client.delete(key)
     db.commit()
     db.refresh(todo)
-    return {"message": "Pomodoro finished", "elapsed_time": elapsed_time, "total_pomodoros": todo.pomodoro_sessions}
+    return {"message": "Pomodoro finished", "elapsed_time": accumulated_time, "total_pomodoros": todo.pomodoro_sessions}
 
 
 def get_pomodoro(todo_id: int, current_user: User = Depends(get_current_user)):
@@ -133,11 +135,17 @@ def get_pomodoro(todo_id: int, current_user: User = Depends(get_current_user)):
     session_data = redis_client.get(key)
 
     if not session_data:
-        return {"elapsed_time": 0, "is_running": False}
+        return {"elapsed_time": 0, "is_running": False, "accumulated_time": 0}
 
     session = json.loads(session_data)
-    elapsed_time = (datetime.now(timezone.utc) - datetime.fromisoformat(session["start_time"])).total_seconds()
-    return {"elapsed_time": int(elapsed_time), "is_running": True}
+    if "start_time" in session:
+        elapsed_time = (datetime.now(timezone.utc) - datetime.fromisoformat(session["start_time"])).total_seconds()
+        accumulated_time = session.get("accumulated_time", 0)
+        return {"elapsed_time": int(accumulated_time + elapsed_time), "is_running": True,
+                "accumulated_time": accumulated_time}
+    else:
+        return {"elapsed_time": session.get("accumulated_time", 0), "is_running": False,
+                "accumulated_time": session.get("accumulated_time", 0)}
 
 
 def mark_task_as_completed(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):
