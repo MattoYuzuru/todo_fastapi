@@ -25,7 +25,7 @@
     </div>
     <div class="create-button-container">
       <router-link to="/todos/create">
-        <button class="add-button">📃 Add New Todo</button>
+        <button class="all-button">📃 Add New Todo</button>
       </router-link>
     </div>
   </div>
@@ -180,7 +180,7 @@ button:disabled {
   text-align: center;
 }
 
-.add-button {
+.all-button {
   display: inline-block;
   padding: 10px 20px;
   background-color: #28a745;
@@ -192,7 +192,7 @@ button:disabled {
   transition: background-color 0.2s ease;
 }
 
-.add-button:hover {
+.all-button:hover {
   background-color: #218838;
 }
 </style>
