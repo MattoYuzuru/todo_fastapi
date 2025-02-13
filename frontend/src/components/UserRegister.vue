@@ -38,7 +38,7 @@ export default {
   methods: {
     async register() {
       try {
-        const response = await axios.post('http://localhost:8000/users/create', {
+        const response = await axios.post('http://localhost:8000/create', {
           username: this.username,
           email: this.email,
           password: this.password
@@ -48,7 +48,7 @@ export default {
           }
         });
         console.log(response.data);
-        this.$router.push('/users/login');
+        this.$router.push('/login');
       } catch (error) {
         this.errorMessage = "Registration failed. Please check your details.";
       }
