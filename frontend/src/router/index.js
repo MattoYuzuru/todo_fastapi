@@ -2,10 +2,11 @@ import Vue from 'vue';
 import Router from 'vue-router';
 import UserRegister from '../components/UserRegister.vue';
 import UserLogin from '../components/UserLogin.vue';
+import UserAccount from "../components/UserAccount.vue";
 import HomePage from '../components/HomePage.vue';
 import TodoDetails from '../components/TodoDetails.vue';
-import TodoList from "@/components/TodoList.vue";
-import AddTodo from "@/components/AddTodo.vue";
+import TodoList from "../components/TodoList.vue";
+import AddTodo from "../components/AddTodo.vue";
 
 Vue.use(Router);
 
@@ -40,6 +41,12 @@ const routes = [
         path: '/todos/:id',
         name: 'TodoDetails',
         component: TodoDetails,
+        props: true
+    },
+    {
+        path: '/users/me/',
+        name: 'UserAccount',
+        component: UserAccount,
         props: true
     }
 ];
