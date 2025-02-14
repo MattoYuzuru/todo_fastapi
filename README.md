@@ -79,8 +79,6 @@ todo_fastapi
     │   ├───components
     │   │   ├───AddTodo.vue
     │   │   ├───HomePage.vue
-    │   │   ├───PomodoroPage.vue
-    │   │   ├───TimerPage.vue
     │   │   ├───TodoDetails.vue
     │   │   ├───TodoList.vue
     │   │   ├───UserLogin.vue
