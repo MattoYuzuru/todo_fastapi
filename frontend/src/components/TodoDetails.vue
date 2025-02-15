@@ -18,9 +18,9 @@
     <div class="timer">
       <h3>🍅 Pomodoro Timer</h3>
       <p class="timer-display">{{ formattedTime }}</p>
-      <button @click="startPomodoro" :disabled="isRunning">Start</button>
-      <button @click="pausePomodoro" :disabled="!isRunning">Pause</button>
-      <button @click="finishPomodoro" :disabled="!isRunning">Finish</button>
+      <button @click="startPomodoro" :disabled="isRunning" class="start-btn">Start</button>
+      <button @click="pausePomodoro" :disabled="!isRunning" class="pause-btn">Pause</button>
+      <button @click="finishPomodoro" :disabled="!isRunning" class="finish-btn">Finish</button>
     </div>
 
     <button v-if="todo.status !== 'Completed'" @click="markCompleted">Mark as Completed</button>
@@ -53,6 +53,9 @@ export default {
     };
   },
   computed: {
+    authToken() {
+      return localStorage.getItem('token');
+    },
     formattedTime() {
       const minutes = Math.floor(this.timeInSeconds / 60);
       const seconds = this.timeInSeconds % 60;
@@ -69,6 +72,10 @@ export default {
     }
   },
   async mounted() {
+    if (!this.authToken) {
+      this.$router.push('/login');
+      return;
+    }
     window.addEventListener("beforeunload", this.confirmReload);
     await this.fetchTodo();
     this.fetchPomodoroTime();
@@ -83,7 +90,7 @@ export default {
     async fetchTodo() {
       try {
         const response = await axios.get(`http://localhost:8000/todos/${this.id}`, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: {Authorization: `Bearer ${this.authToken}`}
         });
         this.todo = response.data;
       } catch (error) {
@@ -93,21 +100,21 @@ export default {
     async deleteTodo() {
       try {
         await axios.delete(`http://localhost:8000/todos/${this.id}`, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: {Authorization: `Bearer ${this.authToken}`}
         });
-        await this.$router.push('/');
+        this.$router.push('/');
       } catch (error) {
-        console.error(error);
+        console.error("Error deleting todo:", error);
       }
     },
     async markCompleted() {
       try {
         await axios.post(`http://localhost:8000/todos/${this.id}/complete`, {}, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: {Authorization: `Bearer ${this.authToken}`}
         });
         await this.fetchTodo();
       } catch (error) {
-        console.error(error);
+        console.error("Error marking todo as completed:", error);
       }
     },
     confirmReload(event) {
@@ -117,13 +124,11 @@ export default {
     async fetchPomodoroTime() {
       try {
         const response = await axios.get(`http://localhost:8000/todos/${this.id}/pomodoro/status`, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: {Authorization: `Bearer ${this.authToken}`}
         });
-
         this.timeInSeconds = response.data.elapsed_time;
         this.isRunning = response.data.is_running;
         this.accumulatedTime = Math.round(response.data.accumulated_time) || 0;
-
         if (this.isRunning) {
           this.startLocalTimer();
         } else {
@@ -136,9 +141,8 @@ export default {
     async startPomodoro() {
       try {
         const response = await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/start`, {}, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: {Authorization: `Bearer ${this.authToken}`}
         });
-
         this.isRunning = true;
         this.startTime = new Date(response.data.start_time);
         this.accumulatedTime = Math.round(response.data.accumulated_time) || 0;
@@ -150,16 +154,13 @@ export default {
     async pausePomodoro() {
       try {
         await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/pause`, {}, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: {Authorization: `Bearer ${this.authToken}`}
         });
-
         this.isRunning = false;
         clearInterval(this.timerInterval);
-
         const elapsedTime = (new Date() - this.startTime) / 1000;
         this.accumulatedTime += Math.round(elapsedTime);
         this.timeInSeconds = this.accumulatedTime;
-
         await this.fetchTodo();
       } catch (error) {
         console.error("Error pausing pomodoro:", error);
@@ -168,16 +169,13 @@ export default {
     async finishPomodoro() {
       try {
         const response = await axios.post(`http://localhost:8000/todos/${this.id}/pomodoro/finish`, {}, {
-          headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
+          headers: {Authorization: `Bearer ${this.authToken}`}
         });
-
         this.isRunning = false;
         clearInterval(this.timerInterval);
-
         this.timeInSeconds = 0;
         this.todo.total_time_spent += Math.round(response.data.elapsed_time);
         this.todo.pomodoro_sessions += 1;
-
         await this.fetchTodo();
       } catch (error) {
         console.error("Error finishing pomodoro:", error);
@@ -197,26 +195,33 @@ export default {
 </script>
 
 <style scoped>
+* {
+  font-family: Andale Mono, monospace;
+}
+
 .todo-details {
   max-width: 600px;
   margin: auto;
-  padding: 20px;
-  background: white;
+  padding: 24px;
+  background: #ffffff;
   border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  border: 2px solid black;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px solid #ddd;
 }
 
 h2 {
   text-align: center;
+  margin-bottom: 10px;
 }
 
 .todo-info {
-  margin: 10px 0;
+  margin: 15px 0;
+  font-size: 16px;
 }
 
 .todo-info p {
-  margin: 5px 0;
+  margin: 6px 0;
+  color: #333;
 }
 
 .timer {
@@ -227,19 +232,21 @@ h2 {
 .timer-display {
   font-size: 24px;
   font-weight: bold;
+  color: #222;
   margin: 10px 0;
 }
 
 button {
   display: block;
   width: 100%;
-  padding: 10px;
-  margin-top: 10px;
+  padding: 12px;
+  margin-top: 12px;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background 0.3s;
+  font-weight: 600;
+  font-size: 16px;
+  transition: background 0.3s ease-in-out;
 }
 
 button:disabled {
@@ -247,45 +254,53 @@ button:disabled {
   cursor: not-allowed;
 }
 
-button:not(:disabled):hover {
-  opacity: 0.8;
-}
-
-button:nth-child(1) {
-  background: #3ea9db;
+.start-btn {
+  background: #28a745;
   color: white;
 }
 
-button:nth-child(2) {
+.start-btn:hover {
+  background: #218838;
+}
+
+.pause-btn {
   background: #ffc107;
   color: black;
 }
 
-button:nth-child(3) {
+.pause-btn:hover {
+  background: #e0a800;
+}
+
+.finish-btn {
   background: #dc3545;
   color: white;
 }
 
-.all-button {
-  display: inline-block;
-  padding: 10px 20px;
-  background-color: #4391dd;
-  color: white;
-  border: none;
-  font-size: 16px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.4s ease;
-  margin-right: 10px;
-}
-
-.all-button:hover {
-  background-color: #2377c4;
+.finish-btn:hover {
+  background: #c82333;
 }
 
 .navigation-buttons {
   display: flex;
   justify-content: space-between;
   margin-top: 20px;
+}
+
+.all-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: center;
+}
+
+.all-button:hover {
+  background-color: #0056b3;
 }
 </style>

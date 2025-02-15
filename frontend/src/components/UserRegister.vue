@@ -58,21 +58,26 @@ export default {
 </script>
 
 <style scoped>
+
+* {
+    font-family: Andale Mono, monospace;
+}
+
 .register-container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #f8f9fa;
+  background-color: #f4f4f4;
 }
 
 .register-card {
   width: 100%;
   max-width: 400px;
-  padding: 20px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
@@ -80,34 +85,42 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 label {
-  font-weight: bold;
-  display: block;
-  margin-bottom: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
 }
 
 input {
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 16px;
+  border-radius: 6px;
+  font-size: 14px;
   box-sizing: border-box;
+  transition: border-color 0.2s ease-in-out;
+}
+
+input:focus {
+  border-color: #28a745;
+  outline: none;
 }
 
 .btn-primary {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   background-color: #28a745;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
   font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
 }
 
 .btn-primary:hover {
@@ -115,8 +128,10 @@ input {
 }
 
 .error {
-  color: red;
-  margin-top: 10px;
+  color: #d32f2f;
+  margin-top: 12px;
   font-size: 14px;
+  font-weight: 500;
 }
 </style>
+
