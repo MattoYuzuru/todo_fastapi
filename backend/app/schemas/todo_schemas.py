@@ -14,6 +14,8 @@ class TodoItemBase(BaseModel):
     pomodoro_sessions: int = 0
     total_time_spent: int = 0
     current_streak: int = 0
+    longest_streak: Optional[int] = 0
+    last_activity_date: Optional[date] = None
 
 
 class TodoItemCreate(TodoItemBase):
@@ -21,15 +23,17 @@ class TodoItemCreate(TodoItemBase):
 
 
 class TodoItemUpdate(BaseModel):
-    title: Optional[str] = Field(None, max_length=100)
+    title: Optional[str] = None
     description: Optional[str] = None
-    status: Optional[str] = Field(None, max_length=20)
+    status: Optional[str] = None
     priority: Optional[str] = None
     due_date: Optional[date] = None
     collaborators: Optional[List[int]] = None
     pomodoro_sessions: Optional[int] = None
     total_time_spent: Optional[int] = None
     current_streak: Optional[int] = None
+    longest_streak: Optional[int] = 0
+    last_activity_date: Optional[date] = None
 
 
 class TodoItemResponse(TodoItemBase):
@@ -39,5 +43,9 @@ class TodoItemResponse(TodoItemBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
+
+
+class TodoWithStreak(BaseModel):
+    todo: TodoItemResponse
+    streak: dict

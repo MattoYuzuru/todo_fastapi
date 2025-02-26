@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr, Field
+from datetime import datetime, date
 from typing import Optional
-from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserBase(BaseModel):
@@ -8,6 +9,7 @@ class UserBase(BaseModel):
     email: EmailStr
     current_streak: int = 0
     longest_streak: int = 0
+    last_activity_date: Optional[date] = None
     pomodoro_sessions: int = 0
     tasks_completed: int = 0
 
@@ -34,5 +36,4 @@ class UserResponse(UserBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
