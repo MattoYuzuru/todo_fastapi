@@ -19,6 +19,8 @@ class TodoItem(Base):
     pomodoro_sessions = Column(Integer, default=0)
     total_time_spent = Column(Integer, default=0)
     current_streak = Column(Integer, default=0)
+    longest_streak = Column(Integer, default=0)
+    last_activity_date = Column(Date, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
