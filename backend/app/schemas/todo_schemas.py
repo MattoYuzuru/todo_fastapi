@@ -48,4 +48,4 @@ class TodoItemResponse(TodoItemBase):
 
 class TodoWithStreak(BaseModel):
     todo: TodoItemResponse
-    streak: dict
+    current_streak: dict

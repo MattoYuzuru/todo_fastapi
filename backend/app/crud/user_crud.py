@@ -103,14 +103,13 @@ def user_streak_management(user_id: int, db: Session = Depends(get_db)):
 
     today = datetime.today().date()
 
-    if db_user.current_streak is None or db_user.last_activity_date is None or db_user.longest_streak is None:
+    if (not db_user.current_streak) or (db_user.last_activity_date is None) or (not db_user.longest_streak):
         db_user.current_streak = 1
         db_user.longest_streak = 1
         db_user.last_activity_date = today
     else:
         if (today - db_user.last_activity_date).days == 1:
             db_user.current_streak += 1
-            db_user.longest_streak += 1
             db_user.last_activity_date = today
             if db_user.current_streak > db_user.longest_streak:
                 db_user.longest_streak = db_user.current_streak

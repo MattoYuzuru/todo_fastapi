@@ -8,7 +8,9 @@ from ..auth import create_access_token
 from ..crud.user_crud import (
     authenticate_user,
     create_user,
-    get_user_by_id, get_user_by_username, get_current_user
+    get_user_by_id,
+    get_user_by_username,
+    get_current_user
 )
 from ..crud.user_crud import (
     get_all_users,

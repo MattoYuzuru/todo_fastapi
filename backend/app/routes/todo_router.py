@@ -1,29 +1,38 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..crud.todo_crud import (create_todo_item,
-                              get_todo_item,
-                              get_user_todo_items,
-                              update_todo_item,
-                              delete_todo_item,
-                              start_pomodoro,
-                              pause_pomodoro,
-                              finish_pomodoro,
-                              mark_task_as_completed,
-                              get_completed_tasks,
-                              get_pomodoro
-                              )
+from ..crud.todo_crud import (
+    create_todo_item,
+    get_todo_item,
+    get_user_todo_items,
+    update_todo_item,
+    delete_todo_item,
+    start_pomodoro,
+    pause_pomodoro,
+    finish_pomodoro,
+    mark_task_as_completed,
+    get_completed_tasks,
+    get_pomodoro,
+    todo_streak_management
+)
 from ..crud.user_crud import get_current_user
 from ..db.session import get_db
 from ..models.user import User
-from ..schemas.todo_schemas import TodoItemCreate, TodoItemUpdate, TodoItemResponse
+from ..schemas.todo_schemas import (
+    TodoItemCreate,
+    TodoItemUpdate,
+    TodoItemResponse,
+    TodoWithStreak
+)
 
 router = APIRouter()
 
 
-@router.post("/todos/", response_model=TodoItemResponse)
+@router.post("/todos/", response_model=TodoWithStreak)
 def create_task(todo: TodoItemCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return create_todo_item(db, todo, current_user)
+    todo_item = create_todo_item(db, todo, current_user)
+    streak_update = todo_streak_management(db, todo_item.id, current_user)
+    return {"todo": todo_item, "current_streak": streak_update}
 
 
 @router.get("/todos/{todo_id}", response_model=TodoItemResponse)
@@ -65,7 +74,9 @@ def delete_task(todo_id: int, db: Session = Depends(get_db), current_user: User 
 
 @router.post("/todos/{todo_id}/complete")
 def complete_task(todo_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return mark_task_as_completed(db, todo_id, current_user)
+    todo = mark_task_as_completed(db, todo_id, current_user)
+    streak_result = todo_streak_management(db, todo_id, current_user)
+    return {"todo": todo, "current_streak": streak_result}
 
 
 @router.post("/todos/{todo_id}/pomodoro/start")
@@ -80,9 +91,16 @@ def pause_pomodoro_timer(todo_id: int, db: Session = Depends(get_db), current_us
 
 @router.post("/todos/{todo_id}/pomodoro/finish")
 def finish_pomodoro_timer(todo_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return finish_pomodoro(db, todo_id, current_user)
+    pomodoro_result = finish_pomodoro(db, todo_id, current_user)
+    streak_result = todo_streak_management(db, todo_id, current_user)
+    return {"pomodoro": pomodoro_result, "current_streak": streak_result}
 
 
 @router.get("/todos/{todo_id}/pomodoro/status")
 def get_pomodoro_status(todo_id: int, current_user: User = Depends(get_current_user)):
     return get_pomodoro(todo_id, current_user)
+
+
+@router.put("/todos/{todo_id}/streak/", response_model=TodoItemResponse)
+def update_todo_streak(todo_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return todo_streak_management(db=db, todo_id=todo_id, current_user=current_user)
