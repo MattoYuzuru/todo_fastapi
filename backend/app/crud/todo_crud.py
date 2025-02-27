@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..config import TIME_ZONE, REDIS_HOST, REDIS_PORT
-from ..crud.user_crud import get_current_user
+from ..crud.user_crud import get_current_user, user_streak_management
 from ..models import TodoItem
 from ..models.user import User
 from ..schemas.todo_schemas import TodoItemCreate, TodoItemUpdate
@@ -162,3 +162,40 @@ def mark_task_as_completed(db: Session, todo_id: int, current_user: User = Depen
     db.commit()
     db.refresh(todo)
     return todo
+
+
+def todo_streak_management(db: Session, todo_id: int, current_user: User = Depends(get_current_user)):
+    todo = db.query(TodoItem).filter(TodoItem.id == todo_id, TodoItem.user_id == current_user.id).first()
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    today = datetime.today().date()
+
+    if todo.current_streak is None or todo.last_activity_date is None or todo.longest_streak is None:
+        todo.current_streak = 1
+        todo.longest_streak = 1
+        todo.last_activity_date = today
+    else:
+        if (today - todo.last_activity_date).days == 1:
+            todo.current_streak += 1
+            todo.last_activity_date = today
+            if todo.current_streak > todo.longest_streak:
+                todo.longest_streak = todo.current_streak
+        elif (today - todo.last_activity_date).days > 1:
+            todo.current_streak = 1
+            todo.last_activity_date = today
+        else:
+            return {"message": "Streak already updated for today",
+                    "current_streak": todo.current_streak,
+                    "longest_streak": todo.longest_streak
+                    }
+
+    db.commit()
+    db.refresh(todo)
+
+    user_streak_management(current_user.id, db)
+
+    return {"message": "Streak updated",
+            "current_streak": todo.current_streak,
+            "longest_streak": todo.longest_streak
+            }

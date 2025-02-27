@@ -1,3 +1,6 @@
+from datetime import datetime
+from http.cookiejar import user_domain_match
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -91,3 +94,38 @@ def delete_user(db: Session, user_id: int):
         db.delete(db_user)
         db.commit()
     return db_user
+
+
+def user_streak_management(user_id: int, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    today = datetime.today().date()
+
+    if db_user.current_streak is None or db_user.last_activity_date is None or db_user.longest_streak is None:
+        db_user.current_streak = 1
+        db_user.longest_streak = 1
+        db_user.last_activity_date = today
+    else:
+        if (today - db_user.last_activity_date).days == 1:
+            db_user.current_streak += 1
+            db_user.longest_streak += 1
+            db_user.last_activity_date = today
+            if db_user.current_streak > db_user.longest_streak:
+                db_user.longest_streak = db_user.current_streak
+        elif (today - db_user.last_activity_date).days > 1:
+            db_user.current_streak = 1
+            db_user.last_activity_date = today
+        else:
+            return {"message": "Streak already updated for today",
+                    "current_streak": db_user.current_streak,
+                    "longest_streak": db_user.longest_streak
+                    }
+
+    db.commit()
+    db.refresh(db_user)
+    return {"message": "Streak updated",
+            "current_streak": db_user.current_streak,
+            "longest_streak": db_user.longest_streak
+            }
