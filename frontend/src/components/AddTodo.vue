@@ -58,6 +58,7 @@ export default {
         pomodoro_sessions: 0,
         total_time_spent: 0,
         current_streak: 0,
+        longest_streak: 0,
       },
     };
   },
